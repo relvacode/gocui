@@ -64,6 +64,13 @@ func simpleEditor(v *View, key Key, ch rune, mod Modifier) {
 	}
 }
 
+// EditWriteColor writes a rune at the cursor position, specifying the foreground and background colors of the cell.
+func (v *View) EditWriteColor(ch rune, fgColor, bgColor Attribute) {
+	w := runewidth.RuneWidth(ch)
+	v.writeRuneColor(v.cx, v.cy, ch, fgColor, bgColor)
+	v.moveCursor(w, 0, true)
+}
+
 // EditWrite writes a rune at the cursor position.
 func (v *View) EditWrite(ch rune) {
 	w := runewidth.RuneWidth(ch)
@@ -249,7 +256,7 @@ func (v *View) moveCursor(dx, dy int, writeMode bool) {
 				}
 				v.cx = 0
 			}
-		} else { // vertical movement
+		} else {                  // vertical movement
 			if curLineWidth > 0 { // move cursor to the EOL
 				if v.Wrap {
 					v.cx = curLineWidth
@@ -327,7 +334,7 @@ func (v *View) moveCursor(dx, dy int, writeMode bool) {
 // position corresponding to the point (x, y). The length of the internal
 // buffer is increased if the point is out of bounds. Overwrite mode is
 // governed by the value of View.overwrite.
-func (v *View) writeRune(x, y int, ch rune) error {
+func (v *View) writeRuneColor(x, y int, ch rune, fgColor, bgColor Attribute) error {
 	v.tainted = true
 
 	x, y, err := v.realPosition(x, y)
@@ -358,12 +365,16 @@ func (v *View) writeRune(x, y int, ch rune) error {
 		copy(v.lines[y][x+1:], v.lines[y][x:])
 	}
 	v.lines[y][x] = cell{
-		fgColor: v.FgColor,
-		bgColor: v.BgColor,
+		fgColor: fgColor,
+		bgColor: bgColor,
 		chr:     ch,
 	}
 
 	return nil
+}
+
+func (v *View) writeRune(x, y int, ch rune) error {
+	return v.writeRuneColor(x, y, ch, v.FgColor, v.BgColor)
 }
 
 // deleteRune removes a rune from the view's internal buffer, at the

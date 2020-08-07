@@ -170,6 +170,33 @@ func (v *View) Name() string {
 	return v.name
 }
 
+// GetRuneColor gets the current rune from the view buffer at the current cursor position,
+// along with the cell's current foreground and background color.
+func (v *View) GetRuneColor() (rune, Attribute, Attribute, error) {
+	maxX, maxY := v.Size()
+	if v.cx < 0 || v.cx >= maxX || v.cy < 0 || v.cy >= maxY {
+		return 0, 0, 0, ErrInvalidPoint
+	}
+	if v.cy > len(v.lines) {
+		return 0, 0, 0, ErrInvalidPoint
+	}
+
+	line := v.lines[v.cy]
+
+	if v.cx > len(line) {
+		return 0, 0, 0, ErrInvalidPoint
+	}
+	cell := line[v.cx]
+
+	return cell.chr, cell.fgColor, cell.bgColor, nil
+}
+
+// GetRune get the current rune from the view buffer at the current cursor position.
+func (v *View) GetRune() (rune, error) {
+	ch, _, _, err := v.GetRuneColor()
+	return ch, err
+}
+
 // setRune sets a rune at the given point relative to the view. It applies the
 // specified colors, taking into account if the cell must be highlighted. Also,
 // it checks if the position is valid.
