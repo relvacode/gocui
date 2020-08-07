@@ -64,17 +64,17 @@ func simpleEditor(v *View, key Key, ch rune, mod Modifier) {
 	}
 }
 
-// EditWriteColor writes a rune at the cursor position, specifying the foreground and background colors of the cell.
-func (v *View) EditWriteColor(ch rune, fgColor, bgColor Attribute) {
-	w := runewidth.RuneWidth(ch)
-	v.writeRuneColor(v.cx, v.cy, ch, fgColor, bgColor)
-	v.moveCursor(w, 0, true)
-}
-
 // EditWrite writes a rune at the cursor position.
 func (v *View) EditWrite(ch rune) {
 	w := runewidth.RuneWidth(ch)
 	v.writeRune(v.cx, v.cy, ch)
+	v.moveCursor(w, 0, true)
+}
+
+// EditWriteColor writes a rune at the cursor position, specifying the foreground and background colors of the cell.
+func (v *View) EditWriteColor(ch rune, fgColor, bgColor Attribute) {
+	w := runewidth.RuneWidth(ch)
+	v.writeRuneColor(v.cx, v.cy, ch, fgColor, bgColor)
 	v.moveCursor(w, 0, true)
 }
 

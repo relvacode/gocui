@@ -170,31 +170,67 @@ func (v *View) Name() string {
 	return v.name
 }
 
-// GetRuneColor gets the current rune from the view buffer at the current cursor position,
-// along with the cell's current foreground and background color.
-func (v *View) GetRuneColor() (rune, Attribute, Attribute, error) {
+// getCell returns a pointer to the cell at the current cursor position.
+func (v *View) getCell() (*cell, error) {
 	maxX, maxY := v.Size()
 	if v.cx < 0 || v.cx >= maxX || v.cy < 0 || v.cy >= maxY {
-		return 0, 0, 0, ErrInvalidPoint
+		return nil, ErrInvalidPoint
 	}
-	if v.cy > len(v.lines) {
-		return 0, 0, 0, ErrInvalidPoint
+	if v.cy >= len(v.lines) {
+		return nil, ErrInvalidPoint
 	}
 
 	line := v.lines[v.cy]
 
-	if v.cx > len(line) {
-		return 0, 0, 0, ErrInvalidPoint
+	if v.cx >= len(line) {
+		return nil, ErrInvalidPoint
 	}
-	cell := line[v.cx]
 
+	return &line[v.cx], nil
+}
+
+// GetRuneColor gets the current rune from the view buffer at the current cursor position,
+// along with the cell's current foreground and background color.
+func (v *View) GetRuneColor() (rune, Attribute, Attribute, error) {
+	cell, err := v.getCell()
+	if err != nil {
+		return 0, 0, 0, err
+	}
 	return cell.chr, cell.fgColor, cell.bgColor, nil
 }
 
 // GetRune get the current rune from the view buffer at the current cursor position.
 func (v *View) GetRune() (rune, error) {
-	ch, _, _, err := v.GetRuneColor()
-	return ch, err
+	cell, err := v.getCell()
+	if err != nil {
+		return 0, err
+	}
+	return cell.chr, err
+}
+
+// SetRune sets the rune of the cell under the current cursor
+func (v *View) SetRune(ch rune) error {
+	cell, err := v.getCell()
+	if err != nil {
+		return err
+	}
+
+	v.tainted = v.tainted || ch != cell.chr
+	cell.chr = ch
+	return nil
+}
+
+// SetColor sets the foreground and background color of the cell under the current cursor
+func (v *View) SetColor(fgColor, bgColor Attribute) error {
+	cell, err := v.getCell()
+	if err != nil {
+		return err
+	}
+
+	v.tainted = v.tainted || cell.fgColor != fgColor || cell.bgColor != bgColor
+	cell.fgColor = fgColor
+	cell.bgColor = bgColor
+	return nil
 }
 
 // setRune sets a rune at the given point relative to the view. It applies the
